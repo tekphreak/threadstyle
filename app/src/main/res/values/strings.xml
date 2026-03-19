@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ThreadStyle</string>
+    <string name="hint_text">Select text &amp; tap a button to change its style.</string>
+    <string name="copy">Copy</string>
+    <string name="load">Load</string>
+    <string name="composer_hint">Type your text here…</string>
+</resources>
