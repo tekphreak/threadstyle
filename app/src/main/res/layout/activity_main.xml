@@ -26,18 +26,11 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@drawable/ic_bookmark"
-                android:contentDescription="ThreadStyle" />
-
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="ThreadStyle"
+                android:text="TextStyle"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 android:textStyle="bold|italic" />
@@ -99,7 +92,7 @@
             android:id="@+id/composerInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/black"
+            android:background="@drawable/input_bg"
             android:textColor="@color/white"
             android:textColorHint="@color/white_50"
             android:hint="@string/composer_hint"

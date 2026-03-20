@@ -41,6 +41,18 @@ class SettingsActivity : AppCompatActivity() {
         return true
     }
 
+    private fun deleteLogEntry(entry: String) {
+        val logFile = java.io.File(filesDir, "log.txt")
+        if (!logFile.exists()) return
+        val remaining = logFile.readText()
+            .split("---\n")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && it != entry }
+        logFile.writeText(
+            if (remaining.isEmpty()) "" else remaining.joinToString("\n---\n") { it } + "\n---\n"
+        )
+    }
+
     private fun loadLog() {
         val container = binding.logContainer
         container.removeAllViews()
@@ -71,6 +83,11 @@ class SettingsActivity : AppCompatActivity() {
                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(ClipData.newPlainText("ThreadStyle", entry))
                     Toast.makeText(this@SettingsActivity, "Copied", Toast.LENGTH_SHORT).show()
+                }
+                setOnLongClickListener {
+                    deleteLogEntry(entry)
+                    container.removeView(this)
+                    true
                 }
             }
             val params = LinearLayout.LayoutParams(
