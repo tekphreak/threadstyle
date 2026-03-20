@@ -3,6 +3,7 @@ package com.tekphreak.threadstyle
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -26,6 +27,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.checkCopyTone.isChecked = prefs.getBoolean("copy_tone", true)
         binding.checkCopyTone.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("copy_tone", isChecked).apply()
+        }
+
+        binding.aboutButton.setOnClickListener {
+            startActivity(Intent(this, AboutActivity::class.java))
         }
 
         loadLog()

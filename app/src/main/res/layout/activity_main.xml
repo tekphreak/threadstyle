@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tardis_blue">
+    android:background="@color/black">
 
     <!-- Top bar card -->
     <androidx.cardview.widget.CardView
@@ -12,7 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
-        app:cardBackgroundColor="@color/tardis_blue"
+        app:cardBackgroundColor="@color/black"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -52,7 +52,9 @@
                 android:textSize="12sp"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:backgroundTint="#333333"
+                android:backgroundTint="#000000"
+                app:strokeColor="#00b140"
+                app:strokeWidth="1dp"
                 style="?attr/materialButtonStyle" />
 
             <Button
@@ -64,9 +66,9 @@
                 android:textSize="12sp"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:drawableStart="@drawable/ic_copy"
-                android:drawablePadding="4dp"
-                android:backgroundTint="#333333"
+                android:backgroundTint="#000000"
+                app:strokeColor="#00b140"
+                app:strokeWidth="1dp"
                 style="?attr/materialButtonStyle" />
 
             <ImageButton
@@ -97,7 +99,7 @@
             android:id="@+id/composerInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/input_bg"
+            android:background="@color/black"
             android:textColor="@color/white"
             android:textColorHint="@color/white_50"
             android:hint="@string/composer_hint"
