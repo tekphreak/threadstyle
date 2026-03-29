@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -14,6 +16,7 @@ import com.tekphreak.threadstyle.databinding.ActivitySettingsBinding
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
+    private var allEntries: List<String> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +34,18 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.aboutButton.setOnClickListener {
             startActivity(Intent(this, AboutActivity::class.java))
+        }
+
+        binding.searchField.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                renderEntries(s?.toString() ?: "")
+            }
+        })
+
+        binding.clearSearchButton.setOnClickListener {
+            binding.searchField.setText("")
         }
 
         loadLog()
@@ -54,25 +69,33 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun loadLog() {
+        val logFile = java.io.File(filesDir, "log.txt")
+        allEntries = if (logFile.exists()) {
+            logFile.readText()
+                .split("---\n")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .reversed()
+        } else {
+            emptyList()
+        }
+        renderEntries(binding.searchField.text?.toString() ?: "")
+    }
+
+    private fun renderEntries(filter: String) {
         val container = binding.logContainer
         container.removeAllViews()
 
-        val logFile = java.io.File(filesDir, "log.txt")
-        if (!logFile.exists()) return
+        val filtered = if (filter.isBlank()) allEntries
+                       else allEntries.filter { it.contains(filter, ignoreCase = true) }
 
-        val entries = logFile.readText()
-            .split("---\n")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .reversed()
-
-        if (entries.isEmpty()) return
+        if (filtered.isEmpty()) return
 
         val dp4 = (4 * resources.displayMetrics.density).toInt()
         val dp8 = (8 * resources.displayMetrics.density).toInt()
         val dp12 = (12 * resources.displayMetrics.density).toInt()
 
-        entries.forEach { entry ->
+        filtered.forEach { entry ->
             val tv = TextView(this).apply {
                 text = entry
                 textSize = 14f
@@ -86,7 +109,8 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 setOnLongClickListener {
                     deleteLogEntry(entry)
-                    container.removeView(this)
+                    allEntries = allEntries.filter { it != entry }
+                    renderEntries(binding.searchField.text?.toString() ?: "")
                     true
                 }
             }

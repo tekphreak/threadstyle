@@ -25,6 +25,10 @@
             android:name=".AboutActivity"
             android:exported="false"
             android:parentActivityName=".SettingsActivity" />
+        <activity
+            android:name=".ZalgoActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

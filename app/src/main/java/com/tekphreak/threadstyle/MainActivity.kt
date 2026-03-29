@@ -8,7 +8,9 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -47,7 +49,17 @@ class MainActivity : AppCompatActivity() {
         "wizard" to "wizard",
         "ｗｉｄｅ" to "wide",
         "flip" to "flip",
-        "\uD83C\uDD51ubble" to "bubble"
+        "\uD83C\uDD51ubble" to "bubble",
+        "Z̷a̸l̵g̶o" to "zalgo"
+    )
+
+    private val dingbatSymbols = listOf(
+        "★", "☆", "✦", "✧", "✩", "✪", "✫", "✬", "✭", "✮", "✯", "✰",
+        "·", "•", "●", "○", "◆", "◇", "◉",
+        "✓", "✗", "✘", "✂", "♦", "♠", "♥", "♣",
+        "☀", "☁", "☂", "❤", "❣",
+        "➤", "→", "←", "↑", "↓", "↔", "↩",
+        "♬", "♪"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,8 +69,10 @@ class MainActivity : AppCompatActivity() {
 
         setupStyleButtons()
         setupCopyButton()
+        setupCopyButton2()
         setupLoadButton()
         setupCharCounter()
+        setupSymbolsButton()
         binding.settingsButton.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -75,7 +89,10 @@ class MainActivity : AppCompatActivity() {
                 setBackgroundResource(R.drawable.btn_style_bg)
                 setTextColor(0xFFFFFFFF.toInt())
                 setPadding(dp4, dp4 * 2, dp4, dp4 * 2)
-                setOnClickListener { transformText(style) }
+                setOnClickListener {
+                    if (style == "zalgo") launchZalgo()
+                    else transformText(style)
+                }
             }
             val params = android.widget.GridLayout.LayoutParams().apply {
                 width = 0
@@ -87,8 +104,57 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupSymbolsButton() {
+        val dp4 = (4 * resources.displayMetrics.density).toInt()
+        val dp8 = (8 * resources.displayMetrics.density).toInt()
+
+        val container = binding.symbolsContainer
+        dingbatSymbols.forEach { symbol ->
+            val btn = Button(this).apply {
+                text = symbol
+                textSize = 16f
+                isAllCaps = false
+                setBackgroundResource(R.drawable.btn_style_bg)
+                setTextColor(0xFFFFFFFF.toInt())
+                setPadding(dp8, dp4, dp8, dp4)
+                setOnClickListener {
+                    val editText = binding.composerInput
+                    val start = editText.selectionStart.coerceAtLeast(0)
+                    val end = editText.selectionEnd.coerceAtLeast(start)
+                    editText.text?.replace(start, end, symbol)
+                }
+            }
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(dp4, dp4, dp4, dp4) }
+            container.addView(btn, params)
+        }
+
+        binding.symbolsToggle.setOnClickListener {
+            binding.symbolsPanel.visibility =
+                if (binding.symbolsPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+    }
+
     private fun setupCopyButton() {
         binding.copyButton.setOnClickListener { copyToClipboard() }
+    }
+
+    private fun setupCopyButton2() {
+        binding.copyButton2.setOnClickListener {
+            val text = binding.overflow2Input.text?.toString() ?: ""
+            if (text.isEmpty()) {
+                Snackbar.make(binding.root, "Nothing to copy!", Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("ThreadStyle", text))
+            appendToLog(text)
+            Toast.makeText(this, "Part 2 copied", Toast.LENGTH_SHORT).show()
+            val prefs = getSharedPreferences("threadstyle_prefs", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("copy_tone", true)) playSuccessChord()
+        }
     }
 
     private fun setupLoadButton() {
@@ -114,9 +180,36 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 val len = s?.length ?: 0
-                binding.charCounter.text = "$len / 500"
+                if (len <= 500) {
+                    binding.charCounter.text = "$len / 500"
+                    binding.charCounter.setTextColor(0x80FFFFFF.toInt())
+                    binding.overflow2Container.visibility = View.GONE
+                } else {
+                    val overflow = len - 500
+                    binding.charCounter.text = "500 / 500  +$overflow"
+                    binding.charCounter.setTextColor(0xFFFF6B6B.toInt())
+                    binding.overflow2Container.visibility = View.VISIBLE
+                    binding.overflow2Input.setText(s?.substring(500) ?: "")
+                    binding.charCounter2.text = "$overflow / 500"
+                    if (overflow > 500) {
+                        binding.charCounter2.setTextColor(0xFFFF6B6B.toInt())
+                    } else {
+                        binding.charCounter2.setTextColor(0x80FFFFFF.toInt())
+                    }
+                }
             }
         })
+    }
+
+    private fun launchZalgo() {
+        val text = binding.composerInput.text?.toString() ?: ""
+        if (text.isEmpty()) {
+            Snackbar.make(binding.root, "Type something first", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        val intent = Intent(this, ZalgoActivity::class.java)
+        intent.putExtra(ZalgoActivity.EXTRA_TEXT, text)
+        startActivity(intent)
     }
 
     private fun transformText(style: String) {
@@ -193,15 +286,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun copyToClipboard() {
-        val text = binding.composerInput.text?.toString() ?: ""
-        if (text.isEmpty()) {
+        val fullText = binding.composerInput.text?.toString() ?: ""
+        if (fullText.isEmpty()) {
             Snackbar.make(binding.root, "Nothing to copy!", Snackbar.LENGTH_SHORT).show()
             return
         }
+        val text = if (fullText.length > 500) fullText.substring(0, 500) else fullText
+        val label = if (fullText.length > 500) "Part 1 copied" else "Copied to clipboard"
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("ThreadStyle", text))
         appendToLog(text)
-        Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, label, Toast.LENGTH_SHORT).show()
         val prefs = getSharedPreferences("threadstyle_prefs", Context.MODE_PRIVATE)
         if (prefs.getBoolean("copy_tone", true)) playSuccessChord()
     }
