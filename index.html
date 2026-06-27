@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tekphreak's ThreadSaver</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- html2canvas -->
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const UiIcons = {
+            Moon: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>,
+            Sun: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
+            Upload: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
+            Image: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
+            Download: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>,
+            Check: ({ size = 14, strokeWidth = 4 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Bookmark: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
+            Eye: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            EyeOff: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+        };
+
+        const AppIcons = {
+            Heart: () => (
+                <svg aria-label="Like" color="currentColor" fill="none" height="20" role="img" viewBox="0 0 24 24" width="20" stroke="currentColor" strokeWidth="2">
+                    <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.956-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175 1.385 1.175 2.225 0a4.209 4.209 0 0 1 3.684-1.94Z"></path>
+                </svg>
+            ),
+            Comment: () => (
+                <svg aria-label="Comment" color="currentColor" fill="none" height="20" role="img" viewBox="0 0 24 24" width="20" stroke="currentColor" strokeWidth="2">
+                    <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" strokeLinejoin="round"></path>
+                </svg>
+            ),
+            Repost: () => (
+                <svg aria-label="Repost" color="currentColor" fill="none" height="20" role="img" viewBox="0 0 24 24" width="20" stroke="currentColor" strokeWidth="2">
+                    <path d="M19.998 9.497a1 1 0 0 0-1 1v4.228a3.274 3.274 0 0 1-3.27 3.27h-5.313l1.791-1.787a1 1 0 1 0-1.412-1.416L7.29 18.287a1.004 1.004 0 0 0-.294.707v.001c0 .023.012.042.013.065a.923.923 0 0 0 .281.643l3.502 3.504a1 1 0 0 0 1.414-1.414l-1.797-1.798h5.318a5.276 5.276 0 0 0 5.27-5.27v-4.228a1 1 0 0 0-1-1Zm-6.41-3.496-1.795 1.795a1 1 0 1 0 1.414 1.414l3.5-3.5a1.003 1.003 0 0 0 0-1.417l-3.5-3.5a1 1 0 0 0-1.414 1.414l1.794 1.794H8.27A5.277 5.277 0 0 0 3 9.271V13.5a1 1 0 0 0 2 0V9.271a3.275 3.275 0 0 1 3.271-3.27Z"></path>
+                </svg>
+            ),
+            Share: () => (
+                <svg aria-label="Share" color="currentColor" fill="none" height="20" role="img" viewBox="0 0 24 24" width="20" stroke="currentColor" strokeWidth="2">
+                    <line x1="22" x2="9.218" y1="2" y2="10.083"></line>
+                    <polygon points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"></polygon>
+                </svg>
+            ),
+            More: () => (
+                <svg aria-label="More" color="currentColor" fill="currentColor" height="20" role="img" viewBox="0 0 24 24" width="20">
+                    <circle cx="12" cy="12" r="1.5"></circle>
+                    <circle cx="6" cy="12" r="1.5"></circle>
+                    <circle cx="18" cy="12" r="1.5"></circle>
+                </svg>
+            ),
+            Verified: () => (
+                <svg viewBox="0 0 24 24" aria-label="Verified" fill="#0095f6" className="w-4 h-4">
+                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .495.083.965.238 1.4-1.272.65-2.147 2.02-2.147 3.6 0 1.435.716 2.69 1.792 3.4-.42.775-.66 1.68-.66 2.65 0 2.9 2.164 5.275 4.956 5.47.385.92 1.252 1.58 2.296 1.58 1.16 0 2.113-.805 2.416-1.885.303 1.08 1.256 1.885 2.416 1.885 1.045 0 1.912-.66 2.297-1.58 2.793-.195 4.957-2.57 4.957-5.47 0-.97-.24-1.875-.66-2.65 1.075-.71 1.79-1.965 1.79-3.4zM11.002 17.5l-4.707-4.706 1.768-1.768 2.94 2.94 7.53-7.53 1.767 1.767-9.3 9.3z" fillRule="evenodd"></path>
+                </svg>
+            )
+        };
+
+        const DefaultAvatar = () => (
+            <div className="w-full h-full bg-white dark:bg-white flex items-end justify-center overflow-hidden">
+                 <svg viewBox="0 0 24 24" fill="none" className="w-[115%] h-[115%] text-[#C8C8C8] dark:text-[#404040] -mb-1">
+                    <circle cx="12" cy="8" r="5" fill="currentColor"/>
+                    <path d="M3 21.5C3 16.8056 6.80558 13 11.5 13H12.5C17.1944 13 21 16.8056 21 21.5V22H3V21.5Z" fill="currentColor"/>
+                </svg>
+            </div>
+        );
+
+        function App() {
+            const [name, setName] = useState('Jane Doe');
+            const [handle, setHandle] = useState('janedoe');
+            const [time, setTime] = useState('10m');
+            const [showTime, setShowTime] = useState(true);
+            const [content, setContent] = useState('Just setting up my Thread. 🧵✨');
+            const [avatar, setAvatar] = useState(null);
+            const [postImage, setPostImage] = useState(null);
+            const [likes, setLikes] = useState('');
+            const [replies, setReplies] = useState('');
+            const [isVerified, setIsVerified] = useState(false);
+            const [darkMode, setDarkMode] = useState(true);
+            const [isGenerating, setIsGenerating] = useState(false);
+
+            const previewRef = useRef(null);
+            const brandColor = '#003b6f';
+
+            const handleImageUpload = (e, setter) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setter(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleDownload = async () => {
+                if (!previewRef.current) return;
+                setIsGenerating(true);
+                await new Promise(r => setTimeout(r, 100));
+
+                try {
+                    const canvas = await window.html2canvas(previewRef.current, {
+                        backgroundColor: darkMode ? '#000000' : '#ffffff',
+                        scale: 3,
+                        logging: false,
+                        useCORS: true,
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                    });
+
+                    const link = document.createElement('a');
+                    link.download = `thread-${handle}-${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (err) {
+                    console.error("Screenshot failed", err);
+                }
+                setIsGenerating(false);
+            };
+
+            return (
+                <div className={`min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'dark bg-neutral-900 text-white' : 'bg-slate-50 text-slate-900'}`}>
+
+                    <header className="p-6 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 sticky top-0 z-10 shadow-sm">
+                        <div className="max-w-6xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 flex items-center justify-center text-white rounded bg-slate-900 dark:bg-slate-700">
+                                    <UiIcons.Bookmark />
+                                </div>
+                                <h1 className="text-xl font-bold tracking-tight">Tekphreak's ThreadSaver <a href="https://ko-fi.com/tekphreak">☕</a></h1>
+                            </div>
+                            <button
+                                onClick={() => setDarkMode(!darkMode)}
+                                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
+                            >
+                                {darkMode ? <UiIcons.Sun size={20} /> : <UiIcons.Moon size={20} />}
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+                        <div className="space-y-6">
+                            <div className="bg-white dark:bg-neutral-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-700">
+                                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <span className="w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+                                    Post Details
+                                </h2>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Name</label>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 focus:ring-2 outline-none transition-all"
+                                            style={{ '--tw-ring-color': brandColor }}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Handle (no @)</label>
+                                        <input
+                                            type="text"
+                                            value={handle}
+                                            onChange={(e) => setHandle(e.target.value)}
+                                            className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 focus:ring-2 outline-none transition-all"
+                                            style={{ '--tw-ring-color': brandColor }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Time</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={time}
+                                                onChange={(e) => setTime(e.target.value)}
+                                                className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 focus:ring-2 outline-none transition-all"
+                                                style={{ '--tw-ring-color': brandColor }}
+                                            />
+                                            <button
+                                                onClick={() => setShowTime(!showTime)}
+                                                className={`p-2.5 rounded-lg border flex items-center justify-center transition-colors ${showTime ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400' : 'bg-slate-50 dark:bg-neutral-900 border-slate-200 dark:border-neutral-700 text-slate-400'}`}
+                                            >
+                                                {showTime ? <UiIcons.Eye size={20} /> : <UiIcons.EyeOff size={20} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-end pb-2 gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isVerified ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-300 dark:border-neutral-600'}`}>
+                                                {isVerified && <UiIcons.Check size={14} strokeWidth={4} />}
+                                            </div>
+                                            <input type="checkbox" checked={isVerified} onChange={() => setIsVerified(!isVerified)} className="hidden" />
+                                            <span className="text-sm">Verified</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${darkMode ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-300 dark:border-neutral-600'}`}>
+                                                {darkMode && <UiIcons.Check size={14} strokeWidth={4} />}
+                                            </div>
+                                            <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="hidden" />
+                                            <span className="text-sm">Dark Mode</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 mb-4">
+                                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Content</label>
+                                    <textarea
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                        rows={4}
+                                        className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 focus:ring-2 outline-none transition-all resize-none"
+                                        style={{ '--tw-ring-color': brandColor }}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Profile Picture</label>
+                                        <div className="relative">
+                                            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setAvatar)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                            <div className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors overflow-hidden">
+                                                {avatar ? 'Change' : 'Upload'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Post Image</label>
+                                        <div className="relative">
+                                            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setPostImage)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                            <div className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 text-slate-900 dark:text-white border border-slate-200 dark:border-neutral-700 flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors">
+                                                <UiIcons.Image size={16} />
+                                                {postImage ? 'Change' : 'Add'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Likes</label>
+                                        <input type="text" value={likes} placeholder="0" onChange={(e) => setLikes(e.target.value)} className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 outline-none" style={{ '--tw-ring-color': brandColor }} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Replies</label>
+                                        <input type="text" value={replies} placeholder="0" onChange={(e) => setReplies(e.target.value)} className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 outline-none" style={{ '--tw-ring-color': brandColor }} />
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleDownload}
+                                    disabled={isGenerating}
+                                    className="w-full mt-8 py-3 px-4 rounded-xl text-white font-medium flex items-center justify-center gap-2 shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                                    style={{ backgroundColor: brandColor }}
+                                >
+                                    {isGenerating ? <span className="animate-pulse">Generating...</span> : <><UiIcons.Download size={18} /> Download Image</>}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Preview Column */}
+                        <div className="flex flex-col items-center justify-start pt-4">
+                            <div className="text-sm font-bold text-slate-400 mb-4 tracking-widest uppercase">Live Preview</div>
+
+                            <div
+                                ref={previewRef}
+                                className={`w-full max-w-[500px] rounded-3xl overflow-hidden relative shadow-2xl transition-all duration-300 h-auto ${darkMode ? 'dark bg-black text-white' : 'bg-white text-black'}`}
+                                style={{
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                                }}
+                            >
+                                <div className="p-4 flex gap-3 h-full">
+                                    <div className="flex flex-col items-center gap-2 shrink-0">
+                                        <div
+                                            className="rounded-full overflow-hidden bg-slate-200 relative shrink-0 border border-black/10 dark:border-0"
+                                            style={{ width: '35.99px', height: '35.99px' }}
+                                        >
+                                            {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : <DefaultAvatar />}
+                                        </div>
+                                        {/* Dynamic vertical line that stretches with content */}
+                                        <div className="w-[2px] grow rounded-full bg-gray-200 dark:bg-[#333333] mb-4"></div>
+                                    </div>
+
+                                    <div className="flex-1 pb-2">
+                                        <div className="flex items-center justify-between mb-1 h-9">
+                                            <div className="flex items-center gap-1.5">
+                                                <h3 className="font-semibold text-[15px] leading-none text-inherit">{name || 'User'}</h3>
+                                                {isVerified && <AppIcons.Verified />}
+                                            </div>
+                                            <div className="flex items-center gap-3 text-gray-400 dark:text-gray-500">
+                                                {showTime && <span className="text-[15px] font-normal">{time}</span>}
+                                                <button className="text-inherit"><AppIcons.More /></button>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-[15px] leading-[1.4] whitespace-pre-wrap mb-2 text-inherit font-normal -mt-1">
+                                            {content}
+                                        </div>
+
+                                        {postImage && (
+                                            <div className="mb-3 rounded-xl overflow-hidden border border-black/5 dark:border-white/10">
+                                                 <img src={postImage} className="w-full h-auto block" />
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-[18px] mb-2 pt-1 text-inherit">
+                                            <button className="hover:text-red-500 transition-colors"><AppIcons.Heart /></button>
+                                            <button className="hover:text-blue-500 transition-colors"><AppIcons.Comment /></button>
+                                            <button className="hover:text-green-500 transition-colors"><AppIcons.Repost /></button>
+                                            <button className="hover:text-blue-400 transition-colors"><AppIcons.Share /></button>
+                                        </div>
+
+                                        {(likes || replies) && (
+                                            <div className="text-[15px] text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-1">
+                                                {replies && <span>{replies} {parseInt(replies) === 1 ? 'reply' : 'replies'}</span>}
+                                                {replies && likes && <span className="text-[8px] mx-1">•</span>}
+                                                {likes && <span>{likes} {parseInt(likes) === 1 ? 'like' : 'likes'}</span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"de1f0d24aa0c449bb2b9514a582dbc2e","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_timing":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
